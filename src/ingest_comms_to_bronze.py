@@ -35,7 +35,7 @@ def fetch_legislator_data():
         print(f"File saved successfully: {full_file_path}")
         return full_file_path
     else:
-        print("Valio")
+        print("Error: API request failed")
         return None
 
 
