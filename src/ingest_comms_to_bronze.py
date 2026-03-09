@@ -3,18 +3,30 @@ import json
 import requests
 import time
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BRONZE_PATH = "data/bronze/legislators_comms"
 os.makedirs(BRONZE_PATH, exist_ok=True)
+BASE_URL = "https://api.congress.gov/v3/member"
+API_KEY = os.getenv("CONGRESS_API_KEY")
+
+if not API_KEY:
+    raise ValueError("CONGRESS_API_KEY environment variable is not set")
 
 
 def fetch_legislator_data():
-    print("Start fetching legislators")
-    # Make a GET request to the API endpoint
-    url = "https://rickandmortyapi.com/api/character"
-    response = requests.get(url, timeout=10)
-    #response.raise_for_status()
-    if response.status_code == 200:
+    query_params = {
+        "api_key": API_KEY,
+        "format": "json",
+        "currentMember": "true"
+    }
+
+    try:
+        print("Start fetching legislators")
+        response = requests.get(BASE_URL, timeout=10, params=query_params)
+        response.raise_for_status()
         # Parse the response as JSON
         data = response.json()
         # Get the current date and time in UTC timezone and Unix timestamp format
@@ -34,9 +46,10 @@ def fetch_legislator_data():
             json.dump(data, f, ensure_ascii=False, indent=4)
         print(f"File saved successfully: {full_file_path}")
         return full_file_path
-    else:
-        print("Error: API request failed")
-        return None
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching legislators: {e}")
+        return None 
 
 
 if __name__ == "__main__":
