@@ -17,7 +17,7 @@ def transform_to_silver(processing_date):
         files = [f for f in os.listdir(input_dir) if f.endswith('.json')]
         if not files:
             return None
-        
+        print(f"Found {len(files)} JSON files in {input_dir}")
         # Sort the list of JSON files in reverse order so the most recent file is first
         files.sort()
         target_file = files[-1]
@@ -33,27 +33,29 @@ def transform_to_silver(processing_date):
 
         # Data Flattening
         # Extract the records from the JSON data
-        records = raw_data.get("results", [])
+        records = raw_data.get("members", [])
         # Convert the data to a pandas DataFrame
         df = pd.DataFrame(records)
 
         # Schema Enforcement (Data Selection)
         # Select the target columns from the DataFrame
-        target_columns = ['id', 'name', 'status', 'species', 'type']
+        target_columns = ['bioguideId','name', 'partyName', 'state']
         # Copy the selected columns to a new DataFrame
         silver_df = df[target_columns].copy()
 
+        #print(silver_df.head(7))
+
         # Business Logic Filtering
-        # Filter the DataFrame to only include records where the status is "Alive"
-        silver_df = silver_df[silver_df["status"] == "Alive"]
+        # Filter the DataFrame to include only Republican legislators
+        silver_df = silver_df[silver_df["partyName"] == "Democratic"]
         
-        # Convert the "species" column to lowercase
-        silver_df['species'] = silver_df['species'].str.lower()
+        # Convert the "state" column to lowercase
+        silver_df['state'] = silver_df['state'].str.lower()
 
         # Type Casting
         # Convert the "id" column to an integer
-        silver_df['id'] = silver_df['id'].astype(int)
-        
+        #silver_df['bioguideId'] = silver_df['bioguideId'].astype(int)
+
         full_dir_path = os.path.join(SILVER_PATH, partition_date)
         os.makedirs(full_dir_path, exist_ok=True)
 
@@ -68,5 +70,5 @@ def transform_to_silver(processing_date):
 
 
 if __name__ == "__main__":  
-    execution_date = "2026-03-08" 
+    execution_date = "2026-03-09" 
     transform_to_silver(execution_date)
