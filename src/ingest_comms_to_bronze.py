@@ -53,12 +53,13 @@ def fetch_legislator_data():
 
         with open(full_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-                  
-        logger.info("Raw data persisted to: %s", full_file_path)
 
-        logger.info("Data ingestion from Congress API completed successfully.")
+        logger.info("Data ingestion from Congress API completed successfully. Saved to: %s", full_file_path)
         return full_file_path
     
     except requests.exceptions.RequestException as e:
         logger.error("Critical error during data ingestion: %s", str(e))
         raise
+
+if __name__ == "__main__":  
+    raw = fetch_legislator_data()
