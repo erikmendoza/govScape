@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import os
+import logging
 
 # Set the paths for the bronze and silver directories
 BRONZE_PATH = "data/bronze/legislators_comms"

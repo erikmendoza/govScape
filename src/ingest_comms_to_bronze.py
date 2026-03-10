@@ -4,7 +4,10 @@ import requests
 import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+import logging
 
+logger = logging.getLogger(__name__)
+ 
 load_dotenv()
 
 BRONZE_PATH = "data/bronze/legislators_comms"
@@ -17,6 +20,8 @@ if not API_KEY:
 
 
 def fetch_legislator_data():
+    logger.info("Starting data ingestion from Congress API...")
+
     query_params = {
         "api_key": API_KEY,
         "format": "json",
@@ -24,11 +29,15 @@ def fetch_legislator_data():
     }
 
     try:
-        print("Start fetching legislators")
+        logger.info("Requesting data from BASE_URL: %s", BASE_URL)
         response = requests.get(BASE_URL, timeout=10, params=query_params)
         response.raise_for_status()
         # Parse the response as JSON
         data = response.json()
+
+        members_count = len(data.get("members", []))
+        logger.info("Success retrieving %s members from API", members_count)
+
         # Get the current date and time in UTC timezone and Unix timestamp format
         now_utc = datetime.now(timezone.utc)
         current_date = now_utc.strftime("%Y-%m-%d")
@@ -44,13 +53,12 @@ def fetch_legislator_data():
 
         with open(full_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-        print(f"File saved successfully: {full_file_path}")
+                  
+        logger.info("Raw data persisted to: %s", full_file_path)
+
+        logger.info("Data ingestion from Congress API completed successfully.")
         return full_file_path
     
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching legislators: {e}")
-        return None 
-
-
-if __name__ == "__main__":
-    raw = fetch_legislator_data()
+        logger.error("Critical error during data ingestion: %s", str(e))
+        raise
