@@ -43,7 +43,7 @@ def transform_to_silver(processing_date):
         # Copy the selected columns to a new DataFrame
         silver_df = df[target_columns].copy()
 
-        #print(silver_df.head(7))
+        print(silver_df.head())
 
         # Business Logic Filtering
         # Filter the DataFrame to include only Republican legislators
