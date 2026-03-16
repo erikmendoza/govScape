@@ -5,12 +5,12 @@ import time
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import logging
+from config import BRONZE_PATH
 
 logger = logging.getLogger(__name__)
  
 load_dotenv()
 
-BRONZE_PATH = "data/bronze/legislators_comms"
 os.makedirs(BRONZE_PATH, exist_ok=True)
 BASE_URL = "https://api.congress.gov/v3/member"
 API_KEY = os.getenv("CONGRESS_API_KEY")
@@ -60,6 +60,3 @@ def fetch_legislator_data():
     except requests.exceptions.RequestException as e:
         logger.error("Critical error during data ingestion: %s", str(e))
         raise
-
-if __name__ == "__main__":  
-    raw = fetch_legislator_data()
