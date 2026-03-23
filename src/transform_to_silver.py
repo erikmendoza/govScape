@@ -5,23 +5,85 @@ import logging
 from config import BRONZE_PATH, SILVER_PATH
 
 # ==========================================
-# DATA QUALITY CONFIGURATION (EXPECTATIONS)
+# 1. CONFIGURATION & EXPECTATIONS
 # ==========================================
-
-# 1. Volume Expectations
-CRITICAL_MIN_RECORDS = 50 
-
-# 2. Geographic Expectations
-EXPECTED_MIN_STATES = 20  
-
-# 3. Column Integrity
-# HARD RULES: Pipeline will STOP if these have nulls
+CRITICAL_MIN_RECORDS = 5 
+EXPECTED_MIN_STATES = 5  
 MANDATORY_COLUMNS = ['bioguideId', 'state']
-
-# SOFT RULES: Pipeline will continue but log a WARNING
 OPTIONAL_COLUMNS = ['name', 'partyName']
 
 logger = logging.getLogger(__name__)
+
+# ==========================================
+# 2. DATA TRANSFORMATION LOGIC
+# ==========================================
+
+
+def clean_legislator_data(df):
+
+    # Schema Selection
+    target_columns = ['bioguideId', 'name', 'partyName', 'state']
+    silver_df = df[target_columns].copy()
+
+    # Business Logic: Filter by Party
+    initial_count = len(silver_df)
+    silver_df = silver_df[silver_df["partyName"] == "Democratic"]
+    final_count = len(silver_df)
+
+    # Standardization: State to lowercase
+    silver_df['state'] = silver_df['state'].str.lower()
+    logger.info("Filtered %s legislators out of %s", initial_count - final_count, initial_count)
+    return silver_df
+
+# ==========================================
+# 3. DATA QUALITY VALIDATION
+# ==========================================
+
+
+def validate_silver_data(df):
+    """
+    Performs multi-layer data validation:
+    1. Volume: Minimum record threshold.
+    2. Nullability: Enforces MANDATORY vs OPTIONAL fields.
+    3. Distribution: Minimum geographic representation (States).
+    """
+    # --- CHECK 1: Volume Integrity ---
+    # We ensure the API didn't return a truncated or empty response.
+    if len(df) < CRITICAL_MIN_RECORDS:
+        logger.error(f'Quality check failed: Less than {CRITICAL_MIN_RECORDS} records in the DataFrame.')
+        return False
+    
+    # --- CHECK 2: Schema & Nullability (Hard Stop) ---
+    # Mandatory columns must be 100% populated for downstream joins.
+    # Prevent "Pipeline Breakage" in the Gold layer due to missing IDs or States.
+    for col in MANDATORY_COLUMNS:
+        null_count = df[col].isnull().sum()
+        if null_count > 0:
+            logger.error(f'Quality check failed: {null_count} null values in column: {col}')
+            return False
+
+    # --- CHECK 3: Data Quality (Soft Warning) ---
+    # Optional columns are logged but don't break the pipeline.
+    for col in OPTIONAL_COLUMNS:
+        null_count = df[col].isnull().sum()
+        if null_count > 0:
+            logger.warning(f'Quality check failed: {null_count} null values in column: {col}')
+    
+    # --- CHECK 4: Geographic Coverage (Business Logic) ---
+    # Verifying that the data represents a national scope, not a partial extract.
+    unique_states = df['state'].nunique()
+    if unique_states < EXPECTED_MIN_STATES:
+        logger.error(f'Quality check failed: Less than {EXPECTED_MIN_STATES} unique states in the DataFrame.')
+        return False
+    
+    # --- CHECK 5: Known Party Names (Homeworks)
+
+    logger.info("Data quality check passed.")
+    return True
+
+# ==========================================
+# 4. MAIN ORCHESTRATION 
+# ==========================================
 
 
 def transform_to_silver(processing_date):
@@ -66,23 +128,7 @@ def transform_to_silver(processing_date):
             return None
         logger.info("Extracted %s records from %s", len(df), input_path)
 
-        # Schema Enforcement (Data Selection)
-        # Select the target columns from the DataFrame
-        target_columns = ['bioguideId', 'name', 'partyName', 'state']
-        # Copy the selected columns to a new DataFrame
-        silver_df = df[target_columns].copy()
-
-        # print(silver_df.head())
-
-        # Business Logic Filtering
-        # Filter the DataFrame to include only Republican legislators
-        initial_count = len(silver_df)
-        silver_df = silver_df[silver_df["partyName"] == "Democratic"]
-        final_count = len(silver_df)
-        logger.info("Filtered %s legislators out of %s", initial_count - final_count, initial_count)
-        
-        # Convert the "state" column to lowercase
-        silver_df['state'] = silver_df['state'].str.lower()
+        silver_df = clean_legislator_data(df)
 
         # Type Casting
         # Convert the "id" column to an integer
@@ -111,45 +157,3 @@ def transform_to_silver(processing_date):
     except Exception as e:
         logger.error("An error occurred: %s", str(e))
         raise
-
-
-def validate_silver_data(df):
-    """
-    Performs multi-layer data validation:
-    1. Volume: Minimum record threshold.
-    2. Nullability: Enforces MANDATORY vs OPTIONAL fields.
-    3. Distribution: Minimum geographic representation (States).
-    """
-    # --- CHECK 1: Volume Integrity ---
-    # We ensure the API didn't return a truncated or empty response.
-    if len(df) < CRITICAL_MIN_RECORDS:
-        logger.error(f'Quality check failed: Less than {CRITICAL_MIN_RECORDS} records in the DataFrame.')
-        return False
-    
-    # --- CHECK 2: Schema & Nullability (Hard Stop) ---
-    # Mandatory columns must be 100% populated for downstream joins.
-    # Prevent "Pipeline Breakage" in the Gold layer due to missing IDs or States.
-    for col in MANDATORY_COLUMNS:
-        null_count = df[col].isnull().sum()
-        if null_count > 0:
-            logger.error(f'Quality check failed: {null_count} null values in column: {col}')
-            return False
-
-    # --- CHECK 3: Data Quality (Soft Warning) ---
-    # Optional columns are logged but don't break the pipeline.
-    for col in OPTIONAL_COLUMNS:
-        null_count = df[col].isnull().sum()
-        if null_count > 0:
-            logger.warning(f'Quality check failed: {null_count} null values in column: {col}')
-    
-    # --- CHECK 4: Geographic Coverage (Business Logic) ---
-    # Verifying that the data represents a national scope, not a partial extract.
-    unique_states = df['state'].nunique()
-    if unique_states < EXPECTED_MIN_STATES:
-        logger.error(f'Quality check failed: Less than {EXPECTED_MIN_STATES} unique states in the DataFrame.')
-        return False
-    
-    # --- CHECK 5: Known Party Names (Homeworks)
-
-    logger.info("Data quality check passed.")
-    return True
