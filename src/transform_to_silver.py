@@ -72,7 +72,7 @@ def transform_to_silver(processing_date):
         # Copy the selected columns to a new DataFrame
         silver_df = df[target_columns].copy()
 
-        #print(silver_df.head())
+        # print(silver_df.head())
 
         # Business Logic Filtering
         # Filter the DataFrame to include only Republican legislators
@@ -86,7 +86,7 @@ def transform_to_silver(processing_date):
 
         # Type Casting
         # Convert the "id" column to an integer
-        #silver_df['bioguideId'] = silver_df['bioguideId'].astype(int)
+        # silver_df['bioguideId'] = silver_df['bioguideId'].astype(int)
         logger.info("Completed data transformation to silver layer...")
 
         # Create the full directory path
@@ -96,7 +96,6 @@ def transform_to_silver(processing_date):
         # Create the full file path
         file_name = "legislators_refined.parquet"
         full_file_path = os.path.join(full_dir_path, file_name)
-
 
         # Data Quality Checks (Validation)------------------------
         if not validate_silver_data(silver_df):
@@ -116,35 +115,41 @@ def transform_to_silver(processing_date):
 
 def validate_silver_data(df):
     """
-    Checks if the DataFrame meets the quality standards before saving.
-    Returns True if valid, raises an exception or returns False if not.
+    Performs multi-layer data validation:
+    1. Volume: Minimum record threshold.
+    2. Nullability: Enforces MANDATORY vs OPTIONAL fields.
+    3. Distribution: Minimum geographic representation (States).
     """
-    # Rule 1 Minumum Records (Preventing empty/partial files)
+    # --- CHECK 1: Volume Integrity ---
+    # We ensure the API didn't return a truncated or empty response.
     if len(df) < CRITICAL_MIN_RECORDS:
         logger.error(f'Quality check failed: Less than {CRITICAL_MIN_RECORDS} records in the DataFrame.')
         return False
     
-    # Rule 2 Critical Columns No Nulls
-
+    # --- CHECK 2: Schema & Nullability (Hard Stop) ---
+    # Mandatory columns must be 100% populated for downstream joins.
+    # Prevent "Pipeline Breakage" in the Gold layer due to missing IDs or States.
     for col in MANDATORY_COLUMNS:
         null_count = df[col].isnull().sum()
         if null_count > 0:
             logger.error(f'Quality check failed: {null_count} null values in column: {col}')
             return False
 
+    # --- CHECK 3: Data Quality (Soft Warning) ---
+    # Optional columns are logged but don't break the pipeline.
     for col in OPTIONAL_COLUMNS:
         null_count = df[col].isnull().sum()
         if null_count > 0:
             logger.warning(f'Quality check failed: {null_count} null values in column: {col}')
     
-    # Rule 3 Business Logic Consistency 
+    # --- CHECK 4: Geographic Coverage (Business Logic) ---
+    # Verifying that the data represents a national scope, not a partial extract.
     unique_states = df['state'].nunique()
     if unique_states < EXPECTED_MIN_STATES:
         logger.error(f'Quality check failed: Less than {EXPECTED_MIN_STATES} unique states in the DataFrame.')
         return False
     
-    # Rule 4 Known Party Names (Homeworks)
-    
+    # --- CHECK 5: Known Party Names (Homeworks)
 
     logger.info("Data quality check passed.")
     return True
