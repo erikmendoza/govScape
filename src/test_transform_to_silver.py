@@ -13,7 +13,7 @@ def test_clean_legislator_data_filters_democrats():
         'name': ['Erik', 'Edgar', 'Erik'],
         'surname': ['Ruiz', 'Mendez', 'Mendozini'],
         'partyName': ['Democratic', 'Republican', 'Democratic'],  # Uno se tiene que ir
-        'state': ['CA', 'TX', 'ny'] # Uno está en minúsculas
+        'state': ['CA', 'TX', 'ny']  # Uno está en minúsculas
     })
 
     processed_df = clean_legislator_data(raw_data)
@@ -24,3 +24,19 @@ def test_clean_legislator_data_filters_democrats():
 
     # Querio saber si el estado de CA se cambia a minusculas, yo se A1 es de CA
     assert processed_df.loc[processed_df['bioguideId'] == 'A1', 'state'].values[0] == 'ca'
+
+    assert processed_df.loc[processed_df.index[1], 'state'] == 'ny'
+
+
+def test_filter_removes_republicans():
+    raw_data = pd.DataFrame({
+        'bioguideId': ['A1', 'B2', 'C3'],
+        'name': ['Erik', 'Edgar', 'Erik'],
+        'surname': ['Ruiz', 'Mendez', 'Mendozini'],
+        'partyName': ['Republican', 'Republican', 'Republican'],
+        'state': ['CA', 'TX', 'ny']
+    })
+
+    processed_df = clean_legislator_data(raw_data)
+
+    assert len(processed_df) == 0
