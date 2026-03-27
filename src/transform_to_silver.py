@@ -2,15 +2,7 @@ import pandas as pd
 import json
 import os
 import logging
-from config import BRONZE_PATH, SILVER_PATH
-
-# ==========================================
-# 1. CONFIGURATION & EXPECTATIONS
-# ==========================================
-CRITICAL_MIN_RECORDS = 5 
-EXPECTED_MIN_STATES = 5  
-MANDATORY_COLUMNS = ['bioguideId', 'state']
-OPTIONAL_COLUMNS = ['name', 'partyName']
+from config import BRONZE_PATH, SILVER_PATH, CRITICAL_MIN_RECORDS, EXPECTED_MIN_STATES, MANDATORY_COLUMNS, OPTIONAL_COLUMNS
 
 logger = logging.getLogger(__name__)
 
