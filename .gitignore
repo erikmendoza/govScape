@@ -38,6 +38,11 @@ data/**
 # Keep empty folders using .gitkeep
 !data/**/.gitkeep
 
+# data files
+*.json
+*.parquet
+*.csv
+
 
 # ==========================================
 # Logs & Execution Trace
