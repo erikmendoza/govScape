@@ -1,25 +1,38 @@
-# config.py
-import os
-from dotenv import load_dotenv
+import os 
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
-API_KEY = os.getenv("CONGRESS_API_KEY")
+class Settings(BaseSettings):
+    congress_api_key: SecretStr = Field(alias="CONGRESS_API_KEY")
 
-# Paths
-BASE_DATA_PATH = "data"
-BRONZE_PATH = os.path.join(BASE_DATA_PATH, "bronze/legislators_comms")
-SILVER_PATH = os.path.join(BASE_DATA_PATH, "silver/legislators_comms")
-GOLD_PATH = os.path.join(BASE_DATA_PATH, "gold/metrics")
+    base_data_path: str = "data"
 
-# ==========================================
-# 1. CONFIGURATION & EXPECTATIONS
-# ==========================================
-CRITICAL_MIN_RECORDS = int(os.getenv("CRITICAL_MIN_RECORDS", 5))
-EXPECTED_MIN_STATES = int(os.getenv("EXPECTED_MIN_STATES", 5))
-MANDATORY_COLUMNS = ['bioguideId', 'state']
-OPTIONAL_COLUMNS = ['name', 'partyName']
+    @property
+    def bronze_path(self):
+        return os.path.join(self.base_data_path, "bronze/legislators_comms")
+    
+    @property
+    def silver_path(self):
+        return os.path.join(self.base_data_path, "silver/legislators_comms")
+    @property
+    def bronze_path(self):
+        return os.path.join(self.base_data_path, "bronze/legislators_comms")
+    @property
+    def gold_path(self):
+        return os.path.join(self.base_data_path, "bronze/metrics")
+    
+    critical_min_records: int = Field(default=5, alias="CRITICAL_MIN_RECORDS")
+    expected_min_states: int = Field(default=5, alias="EXPECTED_MIN_STATES")
 
-# Logging
-LOG_FILE = "govscape_pipeline.log"
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    mandatory_columns: list[str] = ['bioguideId', 'state']
+    optional_columns: list[str] = ['name', 'partyName']
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+
+config = Settings()
