@@ -1,26 +1,26 @@
 import os 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
 
 class Settings(BaseSettings):
     congress_api_key: SecretStr = Field(alias="CONGRESS_API_KEY")
 
-    base_data_path: str = "data"
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent
+    base_data_path: Path = BASE_DIR / "data"
 
     @property
-    def bronze_path(self):
-        return os.path.join(self.base_data_path, "bronze/legislators_comms")
+    def bronze_path(self) -> Path:
+        return self.base_data_path / "bronze" / "legislators_comms"
     
     @property
-    def silver_path(self):
-        return os.path.join(self.base_data_path, "silver/legislators_comms")
+    def silver_path(self) -> Path:
+        return self.base_data_path / "silver" / "legislators_comms"
+    
     @property
-    def bronze_path(self):
-        return os.path.join(self.base_data_path, "bronze/legislators_comms")
-    @property
-    def gold_path(self):
-        return os.path.join(self.base_data_path, "bronze/metrics")
+    def gold_path(self) -> Path:
+        return self.base_data_path / "gold" / "metrics"
     
     critical_min_records: int = Field(default=5, alias="CRITICAL_MIN_RECORDS")
     expected_min_states: int = Field(default=5, alias="EXPECTED_MIN_STATES")

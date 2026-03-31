@@ -1,4 +1,3 @@
-import os
 import json
 import requests
 import time
@@ -8,7 +7,9 @@ from config import config
 
 logger = logging.getLogger(__name__)
 
-os.makedirs(config.bronze_path, exist_ok=True)
+# os.makedirs(config.bronze_path, exist_ok=True)
+config.bronze_path.mkdir(parents=True, exist_ok=True)
+
 BASE_URL = "https://api.congress.gov/v3/member"
 
 
@@ -38,11 +39,16 @@ def fetch_legislator_data():
         unix_ts = int(time.time())
 
         # Create the full directory path with the partition date
-        full_dir_path = os.path.join(config.bronze_path, partition_date)
-        os.makedirs(full_dir_path, exist_ok=True)
+
+        # full_dir_path = os.path.join(config.bronze_path, partition_date)
+        # os.makedirs(full_dir_path, exist_ok=True)
+        print("Esto es partition_date: ", current_date)
+        full_dir_path = config.bronze_path / partition_date
+        full_dir_path.mkdir(parents=True, exist_ok=True)
 
         file_name = f"raw_comms_{unix_ts}.json"
-        full_file_path = os.path.join(full_dir_path, file_name)
+        # full_file_path = os.path.join(full_dir_path, file_name)
+        full_file_path = full_dir_path / file_name
 
         with open(full_file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
