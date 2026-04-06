@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def clean_legislator_data(df):
 
     # Schema Selection
-    target_columns = ['bioguideId', 'name', 'partyName', 'state']
+    target_columns = ["bioguideId", "name", "partyName", "state"]
     silver_df = df[target_columns].copy()
 
     # Business Logic: Filter by Party
@@ -23,9 +23,10 @@ def clean_legislator_data(df):
     final_count = len(silver_df)
 
     # Standardization: State to lowercase
-    silver_df['state'] = silver_df['state'].str.lower()
+    silver_df["state"] = silver_df["state"].str.lower()
     logger.info("Filtered %s legislators out of %s", initial_count - final_count, initial_count)
     return silver_df
+
 
 # ==========================================
 # 3. DATA QUALITY VALIDATION
@@ -42,16 +43,16 @@ def validate_silver_data(df):
     # --- CHECK 1: Volume Integrity ---
     # We ensure the API didn't return a truncated or empty response.
     if len(df) < config.critical_min_records:
-        logger.error(f'Quality check failed: Less than {config.critical_min_records} records in the DataFrame.')
+        logger.error(f"Quality check failed: Less than {config.critical_min_records} records in the DataFrame.")
         return False
-    
+
     # --- CHECK 2: Schema & Nullability (Hard Stop) ---
     # Mandatory columns must be 100% populated for downstream joins.
     # Prevent "Pipeline Breakage" in the Gold layer due to missing IDs or States.
     for col in config.mandatory_columns:
         null_count = df[col].isnull().sum()
         if null_count > 0:
-            logger.error(f'Quality check failed: {null_count} null values in column: {col}')
+            logger.error(f"Quality check failed: {null_count} null values in column: {col}")
             return False
 
     # --- CHECK 3: Data Quality (Soft Warning) ---
@@ -59,22 +60,23 @@ def validate_silver_data(df):
     for col in config.optional_columns:
         null_count = df[col].isnull().sum()
         if null_count > 0:
-            logger.warning(f'Quality check failed: {null_count} null values in column: {col}')
-    
+            logger.warning(f"Quality check failed: {null_count} null values in column: {col}")
+
     # --- CHECK 4: Geographic Coverage (Business Logic) ---
     # Verifying that the data represents a national scope, not a partial extract.
-    unique_states = df['state'].nunique()
+    unique_states = df["state"].nunique()
     if unique_states < config.expected_min_states:
-        logger.error(f'Quality check failed: Less than {config.expected_min_states} unique states in the DataFrame.')
+        logger.error(f"Quality check failed: Less than {config.expected_min_states} unique states in the DataFrame.")
         return False
-    
+
     # --- CHECK 5: Known Party Names (Homeworks)
 
     logger.info("Data quality check passed.")
     return True
 
+
 # ==========================================
-# 4. MAIN ORCHESTRATION 
+# 4. MAIN ORCHESTRATION
 # ==========================================
 
 
@@ -82,15 +84,15 @@ def transform_to_silver(processing_date):
     # Get the list of JSON files in the input directory
     partition_date = f"ingested_at={processing_date}"
     input_dir = os.path.join(config.bronze_path, partition_date)
-    try: 
+    try:
         logger.info("Starting data transformation for date: %s", partition_date)
 
         if not os.path.exists(input_dir):
             logger.warning("Input directory does not exist: %s", input_dir)
             return None
 
-        # Get the list of JSON files in the input directory 
-        files = [f for f in os.listdir(input_dir) if f.endswith('.json')]
+        # Get the list of JSON files in the input directory
+        files = [f for f in os.listdir(input_dir) if f.endswith(".json")]
         if not files:
             logger.warning("No JSON files found in %s. Skipping transformation", input_dir)
             return None
@@ -99,14 +101,14 @@ def transform_to_silver(processing_date):
         files.sort()
         target_file = files[-1]
 
-        # Construct the full path to the JSON file 
+        # Construct the full path to the JSON file
         input_path = os.path.join(input_dir, target_file)
 
         logger.info("Processing latest JSON file: %s", target_file)
 
         # Data Ingestion
         # Load the data from the JSON file
-        with open(input_path, 'r', encoding='utf-8') as f:
+        with open(input_path, "r", encoding="utf-8") as f:
             raw_data = json.load(f)
 
         # Data Flattening
@@ -145,7 +147,7 @@ def transform_to_silver(processing_date):
         silver_df.to_parquet(full_file_path, index=False)
         logger.info("Silver layer data saved successfully: %s", full_file_path)
         return silver_df
-    
+
     except Exception as e:
         logger.error("An error occurred: %s", str(e))
         raise

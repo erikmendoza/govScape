@@ -16,11 +16,7 @@ BASE_URL = "https://api.congress.gov/v3/member"
 def fetch_legislator_data():
     logger.info("Starting data ingestion from Congress API...")
 
-    query_params = {
-        "api_key": config.congress_api_key.get_secret_value(),
-        "format": "json",
-        "currentMember": "true"
-    } 
+    query_params = {"api_key": config.congress_api_key.get_secret_value(), "format": "json", "currentMember": "true"}
 
     try:
         logger.info("Requesting data from BASE_URL: %s", BASE_URL)
@@ -39,23 +35,18 @@ def fetch_legislator_data():
         unix_ts = int(time.time())
 
         # Create the full directory path with the partition date
-
-        # full_dir_path = os.path.join(config.bronze_path, partition_date)
-        # os.makedirs(full_dir_path, exist_ok=True)
-        print("Esto es partition_date: ", current_date)
         full_dir_path = config.bronze_path / partition_date
         full_dir_path.mkdir(parents=True, exist_ok=True)
 
         file_name = f"raw_comms_{unix_ts}.json"
-        # full_file_path = os.path.join(full_dir_path, file_name)
         full_file_path = full_dir_path / file_name
 
-        with open(full_file_path, 'w', encoding='utf-8') as f:
+        with open(full_file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
         logger.info("Data ingestion from Congress API completed successfully. Saved to: %s", full_file_path)
         return full_file_path
-    
+
     except requests.exceptions.RequestException as e:
         logger.error("Critical error during data ingestion: %s", str(e))
         raise

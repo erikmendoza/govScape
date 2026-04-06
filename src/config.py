@@ -1,7 +1,7 @@
-import os 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
+import logging
 
 
 class Settings(BaseSettings):
@@ -33,6 +33,19 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+LOG_FILE = "govscape_pipeline.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=LOG_FORMAT,
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
 
 
 config = Settings()
