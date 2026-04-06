@@ -7,7 +7,6 @@ from config import config
 
 logger = logging.getLogger(__name__)
 
-# os.makedirs(config.bronze_path, exist_ok=True)
 config.bronze_path.mkdir(parents=True, exist_ok=True)
 
 BASE_URL = "https://api.congress.gov/v3/member"

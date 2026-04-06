@@ -1,6 +1,5 @@
 import pandas as pd
 import json
-import os
 import logging
 from config import config
 
@@ -83,26 +82,26 @@ def validate_silver_data(df):
 def transform_to_silver(processing_date):
     # Get the list of JSON files in the input directory
     partition_date = f"ingested_at={processing_date}"
-    input_dir = os.path.join(config.bronze_path, partition_date)
+    input_dir = config.bronze_path / partition_date
+
     try:
         logger.info("Starting data transformation for date: %s", partition_date)
 
-        if not os.path.exists(input_dir):
+        if not input_dir.exists():
             logger.warning("Input directory does not exist: %s", input_dir)
             return None
 
-        # Get the list of JSON files in the input directory
-        files = [f for f in os.listdir(input_dir) if f.endswith(".json")]
+        # Get the latest JSON file in the input directory
+        files = sorted(list(input_dir.glob("*.json")))
+
         if not files:
             logger.warning("No JSON files found in %s. Skipping transformation", input_dir)
             return None
 
-        # Sort the list of JSON files in reverse order so the most recent file is first
-        files.sort()
         target_file = files[-1]
 
         # Construct the full path to the JSON file
-        input_path = os.path.join(input_dir, target_file)
+        input_path = input_dir / target_file
 
         logger.info("Processing latest JSON file: %s", target_file)
 
@@ -130,12 +129,12 @@ def transform_to_silver(processing_date):
         logger.info("Completed data transformation to silver layer...")
 
         # Create the full directory path
-        full_dir_path = os.path.join(config.silver_path, partition_date)
-        os.makedirs(full_dir_path, exist_ok=True)
+        full_dir_path = config.silver_path / partition_date
+        full_dir_path.mkdir(parents=True, exist_ok=True)
 
         # Create the full file path
         file_name = "legislators_refined.parquet"
-        full_file_path = os.path.join(full_dir_path, file_name)
+        full_file_path = full_dir_path / file_name
 
         # Data Quality Checks (Validation)------------------------
         if not validate_silver_data(silver_df):
