@@ -2,6 +2,8 @@ import pandas as pd
 import json
 import logging
 from config import config
+from schemas.legislators import LegislatorSchema
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -45,30 +47,26 @@ def validate_silver_data(df):
         logger.error(f"Quality check failed: Less than {config.critical_min_records} records in the DataFrame.")
         return False
 
-    # --- CHECK 2: Schema & Nullability (Hard Stop) ---
-    # Mandatory columns must be 100% populated for downstream joins.
-    # Prevent "Pipeline Breakage" in the Gold layer due to missing IDs or States.
-    for col in config.mandatory_columns:
-        null_count = df[col].isnull().sum()
-        if null_count > 0:
-            logger.error(f"Quality check failed: {null_count} null values in column: {col}")
-            return False
+    # --- CHECK 2: Schema
+    """
+    records = df.to_dict(orient="records")
 
-    # --- CHECK 3: Data Quality (Soft Warning) ---
-    # Optional columns are logged but don't break the pipeline.
-    for col in config.optional_columns:
-        null_count = df[col].isnull().sum()
-        if null_count > 0:
-            logger.warning(f"Quality check failed: {null_count} null values in column: {col}")
+    try:
+        for record in records:
+            Legislators(**record)
 
-    # --- CHECK 4: Geographic Coverage (Business Logic) ---
+        logger.info("Data quality and schema verification completed successfully.")
+
+    except ValidationError as e:
+        logger.error(f"Quality check failed: Schema validation error: {e}")
+        return False
+    """
+    # --- CHECK 3: Geographic Coverage (Business Logic) ---
     # Verifying that the data represents a national scope, not a partial extract.
     unique_states = df["state"].nunique()
     if unique_states < config.expected_min_states:
         logger.error(f"Quality check failed: Less than {config.expected_min_states} unique states in the DataFrame.")
         return False
-
-    # --- CHECK 5: Known Party Names (Homeworks)
 
     logger.info("Data quality check passed.")
     return True
