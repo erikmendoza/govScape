@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project context into the builder stage
 COPY . .
 
-# Quality Gate: Run tests with a temporary dummy key strictly for this command
+# Quality Gate: Execute test suite using a dummy environment variable to prevent build failure
 RUN CONGRESS_API_KEY=dummy_key_for_testing pytest tests/test_transform_to_silver.py
 
 # =======================================================
@@ -24,6 +24,12 @@ WORKDIR /app
 
 # Copy installed Python packages from the builder stage
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+
+# TRUCO MAESTRO: Copy command-line executables (like pytest, black, etc.)
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# MASTER TRICK: Copy the Python project configuration metadata file so paths remain mapped
+COPY pyproject.toml .
 
 # Copy only the production source code (excludes test files and overhead)
 COPY ./src ./src
