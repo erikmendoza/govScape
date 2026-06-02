@@ -34,7 +34,7 @@ def fetch_legislator_data():
         unix_ts = int(time.time())
 
         # Create the full directory path with the partition date
-        full_dir_path = config.bronze_path / partition_date
+        full_dir_path = config.bronze_path / "legislators_comms" / partition_date
         full_dir_path.mkdir(parents=True, exist_ok=True)
 
         file_name = f"raw_comms_{unix_ts}.json"

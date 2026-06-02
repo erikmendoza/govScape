@@ -10,7 +10,7 @@ def generate_gold_metrics(processing_date):
     # Get the list of JSON files in the input directory
     partition_date = f"ingested_at={processing_date}"
     input_file = "legislators_refined.parquet"
-    input_dir = config.silver_path / partition_date / input_file
+    input_dir = config.silver_path / "legislators_comms" / partition_date / input_file
 
     # Check if the file exists
     if not input_dir.exists():
@@ -32,7 +32,7 @@ def generate_gold_metrics(processing_date):
     # Create the gold directory if it doesn't exist and rename the file
     config.gold_path.mkdir(parents=True, exist_ok=True)
     report_name = f"summary_{processing_date}.csv"
-    full_file_path = config.gold_path / report_name
+    full_file_path = config.gold_path / "metrics" / report_name
 
     # Save the top 5 states to a CSV file
     top_state.to_csv(full_file_path, index=True)

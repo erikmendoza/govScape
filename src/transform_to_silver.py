@@ -80,7 +80,7 @@ def validate_silver_data(df):
 def transform_to_silver(processing_date):
     # Get the list of JSON files in the input directory
     partition_date = f"ingested_at={processing_date}"
-    input_dir = config.bronze_path / partition_date
+    input_dir = config.bronze_path / "legislators_comms" / partition_date
 
     try:
         logger.info("Starting data transformation for date: %s", partition_date)
@@ -127,7 +127,7 @@ def transform_to_silver(processing_date):
         logger.info("Completed data transformation to silver layer...")
 
         # Create the full directory path
-        full_dir_path = config.silver_path / partition_date
+        full_dir_path = config.silver_path / "legislators_comms" / partition_date
         full_dir_path.mkdir(parents=True, exist_ok=True)
 
         # Create the full file path
