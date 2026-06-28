@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 from config import config
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -38,3 +39,8 @@ def generate_gold_metrics(processing_date):
     top_state.to_csv(full_file_path, index=True)
     logger.info("Generated gold metrics for date: %s", partition_date)
     return top_state
+
+
+if __name__ == "__main__":
+    processing_date = sys.argv[1]
+    generate_gold_metrics(processing_date)

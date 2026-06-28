@@ -49,3 +49,7 @@ def fetch_legislator_data():
     except requests.exceptions.RequestException as e:
         logger.error("Critical error during data ingestion: %s", str(e))
         raise
+
+
+if __name__ == "__main__":
+    fetch_legislator_data()

@@ -4,6 +4,7 @@ import logging
 from config import config
 from schemas.legislators import LegislatorSchema
 from pydantic import ValidationError
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -48,19 +49,18 @@ def validate_silver_data(df):
         return False
 
     # --- CHECK 2: Schema
-    """
     records = df.to_dict(orient="records")
 
     try:
         for record in records:
-            Legislators(**record)
+            LegislatorSchema(**record)
 
         logger.info("Data quality and schema verification completed successfully.")
 
     except ValidationError as e:
         logger.error(f"Quality check failed: Schema validation error: {e}")
         return False
-    """
+
     # --- CHECK 3: Geographic Coverage (Business Logic) ---
     # Verifying that the data represents a national scope, not a partial extract.
     unique_states = df["state"].nunique()
@@ -68,7 +68,7 @@ def validate_silver_data(df):
         logger.error(f"Quality check failed: Less than {config.expected_min_states} unique states in the DataFrame.")
         return False
 
-    logger.info("Data quality check passed.")
+    logger.info("Data quality check passed. unique states: %s", unique_states)
     return True
 
 
@@ -148,3 +148,8 @@ def transform_to_silver(processing_date):
     except Exception as e:
         logger.error("An error occurred: %s", str(e))
         raise
+
+
+if __name__ == "__main__":
+    processing_date = sys.argv[1]
+    transform_to_silver(processing_date)

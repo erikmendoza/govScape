@@ -10,7 +10,7 @@ LOG_DIR = BASE_DIR / "logs"
 
 LOG_FORMAT: str = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 LOG_FILE = "govscape_pipeline.log"
-LOG_FILE_PATH: Path = LOG_DIR / "govscape_pipeline.log"
+LOG_FILE_PATH: Path = LOG_DIR / LOG_FILE
 
 # 2. Asegurar que la carpeta 'logs/' exista en la raíz
 LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -24,8 +24,8 @@ logger = logging.getLogger("govscape_config")
 
 class Settings(BaseSettings):
     congress_api_key: SecretStr = Field(alias="CONGRESS_API_KEY")
-    critical_min_records: int = Field(default=5, alias="CRITICAL_MIN_RECORDS")
-    expected_min_states: int = Field(default=5, alias="EXPECTED_MIN_STATES")
+    critical_min_records: int = Field(default=2, alias="CRITICAL_MIN_RECORDS")
+    expected_min_states: int = Field(default=2, alias="EXPECTED_MIN_STATES")
 
     base_data_path: Path = BASE_DIR / "data"
 
