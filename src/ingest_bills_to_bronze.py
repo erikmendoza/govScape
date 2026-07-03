@@ -7,26 +7,23 @@ import requests
 from config import config
 
 logger = logging.getLogger(__name__)
-
 BASE_URL = "https://api.congress.gov/v3/bill"
 
 
 def fetch_bills_data():
     logger.info("Starting data ingestion from Congress API...")
     limit = 250
-    # offset = 0
-    # all_bills = []
     has_more_data = True
     unix_ts = int(time.time())
+    full_file_path = None
+    now_utc = datetime.now(timezone.utc)
+    current_date = now_utc.strftime("%Y-%m-%d")
+    partition_date = f"ingested_at={current_date}"
+
+    full_dir_path = config.bronze_path / "bills" / partition_date
+    full_dir_path.mkdir(parents=True, exist_ok=True)
 
     try:
-        now_utc = datetime.now(timezone.utc)
-        current_date = now_utc.strftime("%Y-%m-%d")
-        partition_date = f"ingested_at={current_date}"
-
-        full_dir_path = config.bronze_path / "bills" / partition_date
-        full_dir_path.mkdir(parents=True, exist_ok=True)
-
         existing_offsets = []
 
         for file in full_dir_path.glob("raw_bills_offset_*.json"):
@@ -96,3 +93,7 @@ def fetch_bills_data():
     except Exception as e:
         logger.error(f"Error fetching bills data: {e}")
         raise
+
+
+if __name__ == "__main__":
+    fetch_bills_data()

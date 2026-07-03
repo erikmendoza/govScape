@@ -6,9 +6,6 @@ import logging
 from config import config
 
 logger = logging.getLogger(__name__)
-
-config.bronze_path.mkdir(parents=True, exist_ok=True)
-
 BASE_URL = "https://api.congress.gov/v3/member"
 
 
@@ -18,6 +15,7 @@ def fetch_legislator_data():
     all_members = []
     limit = 250
     offset = 0
+    full_file_path = None
     unix_ts = int(time.time())
     now_utc = datetime.now(timezone.utc)
     current_date = now_utc.strftime("%Y-%m-%d")
@@ -59,7 +57,7 @@ def fetch_legislator_data():
         file_name = f"raw_comms_{unix_ts}.json"
         full_file_path = config.bronze_path / "legislators_comms" / partition_date / file_name
         logger.info(f"Saving data to {full_file_path}")
-        data = {"members": all_members, "pagination": {"count": len(all_members)}}
+        data = {"members": all_members, "pagination": pagination_info}
         full_file_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(full_file_path, "w", encoding="utf-8") as f:
