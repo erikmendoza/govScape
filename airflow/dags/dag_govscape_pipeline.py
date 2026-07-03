@@ -68,7 +68,7 @@ with DAG(
     dag_id="pipeline_govscape_principal",
     default_args=default_args,
     description="Pipeline legislativo Bronze → Silver → Gold via DockerOperator",
-    schedule="48 3 * * *",  # Manual trigger por ahora ('0 6 * * *' para diario a las 6am)
+    schedule="22 4 * * *",  # Manual trigger por ahora ('0 6 * * *' para diario a las 6am)
     start_date=datetime(2026, 1, 1),
     catchup=False,
     tags=["govscape", "pipeline", "medallion"],
